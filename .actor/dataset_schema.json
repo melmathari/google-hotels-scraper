@@ -1,10 +1,105 @@
 {
     "actorSpecification": 1,
-    "fields": {},
+    "fields": {
+        "title": {
+            "type": "string",
+            "title": "Hotel Name",
+            "description": "The name of the hotel",
+            "example": "Hilton Prague"
+        },
+        "url": {
+            "type": "string",
+            "title": "Google Hotels URL",
+            "description": "Direct URL to the hotel on Google Hotels",
+            "example": "https://www.google.com/travel/hotels/entity/..."
+        },
+        "thumbnail": {
+            "type": "string",
+            "title": "Thumbnail",
+            "description": "URL of the hotel's primary thumbnail image",
+            "nullable": true
+        },
+        "rating": {
+            "type": "number",
+            "title": "Rating",
+            "description": "Average rating on a scale of 0-5",
+            "example": 4.5
+        },
+        "reviews": {
+            "type": "integer",
+            "title": "Number of Reviews",
+            "description": "Total number of reviews for this hotel",
+            "example": 1234
+        },
+        "address": {
+            "type": "string",
+            "title": "Address",
+            "description": "Physical address of the hotel",
+            "nullable": true,
+            "example": "Pobřežní 1, 186 00 Prague, Czechia"
+        },
+        "phone": {
+            "type": "string",
+            "title": "Phone Number",
+            "description": "Contact phone number for the hotel",
+            "nullable": true,
+            "example": "+420 224 841 111"
+        },
+        "website": {
+            "type": "string",
+            "title": "Website",
+            "description": "Official website URL of the hotel",
+            "nullable": true,
+            "example": "https://www.hilton.com/..."
+        },
+        "priceRange": {
+            "type": "string",
+            "title": "Price Range",
+            "description": "Price range across all booking providers (min - max)",
+            "nullable": true,
+            "example": "120 - 180"
+        },
+        "prices": {
+            "type": "array",
+            "title": "Prices by Provider",
+            "description": "List of prices from different booking providers",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "provider": {
+                        "type": "string",
+                        "title": "Provider Name",
+                        "description": "Name of the booking provider",
+                        "example": "Booking.com"
+                    },
+                    "price": {
+                        "type": "number",
+                        "title": "Price",
+                        "description": "Price in the selected currency",
+                        "example": 150
+                    },
+                    "link": {
+                        "type": "string",
+                        "title": "Booking Link",
+                        "description": "Direct link to book through this provider",
+                        "example": "https://www.google.com/travel/..."
+                    }
+                }
+            }
+        },
+        "photos": {
+            "type": "array",
+            "title": "Photo URLs",
+            "description": "List of photo URLs for the hotel",
+            "items": {
+                "type": "string"
+            }
+        }
+    },
     "views": {
         "hotels": {
-            "title": "Overview",
-            "description": "Overview of all scraped hotels",
+            "title": "Hotels Overview",
+            "description": "Quick overview of all scraped hotels with key information",
             "transformation": {
                 "fields": [
                     "thumbnail",
@@ -20,11 +115,11 @@
                 "component": "table",
                 "properties": {
                     "thumbnail": {
-                        "label": "Thumbnail",
+                        "label": "Photo",
                         "format": "image"
                     },
                     "title": {
-                        "label": "Hotel name",
+                        "label": "Hotel Name",
                         "format": "text"
                     },
                     "address": {
@@ -33,19 +128,111 @@
                     },
                     "rating": {
                         "label": "Rating",
-                        "format": "text"
+                        "format": "number"
                     },
                     "reviews": {
-                        "label": "Number of reviews",
-                        "format": "text"
+                        "label": "Reviews",
+                        "format": "number"
                     },
                     "priceRange": {
-                        "label": "Price range",
+                        "label": "Price Range",
                         "format": "text"
                     },
                     "url": {
                         "label": "URL",
                         "format": "link"
+                    }
+                }
+            }
+        },
+        "detailed": {
+            "title": "Detailed View",
+            "description": "Complete hotel data including contact info and booking links",
+            "transformation": {
+                "fields": [
+                    "title",
+                    "rating",
+                    "reviews",
+                    "address",
+                    "phone",
+                    "website",
+                    "priceRange",
+                    "prices",
+                    "url"
+                ]
+            },
+            "display": {
+                "component": "table",
+                "properties": {
+                    "title": {
+                        "label": "Hotel Name",
+                        "format": "text"
+                    },
+                    "rating": {
+                        "label": "Rating",
+                        "format": "number"
+                    },
+                    "reviews": {
+                        "label": "Reviews",
+                        "format": "number"
+                    },
+                    "address": {
+                        "label": "Address",
+                        "format": "text"
+                    },
+                    "phone": {
+                        "label": "Phone",
+                        "format": "text"
+                    },
+                    "website": {
+                        "label": "Website",
+                        "format": "link"
+                    },
+                    "priceRange": {
+                        "label": "Price Range",
+                        "format": "text"
+                    },
+                    "prices": {
+                        "label": "Booking Prices",
+                        "format": "array"
+                    },
+                    "url": {
+                        "label": "Google URL",
+                        "format": "link"
+                    }
+                }
+            }
+        },
+        "prices": {
+            "title": "Price Comparison",
+            "description": "Focus on prices across different booking providers",
+            "transformation": {
+                "fields": [
+                    "title",
+                    "priceRange",
+                    "prices",
+                    "rating"
+                ],
+                "flatten": ["prices"]
+            },
+            "display": {
+                "component": "table",
+                "properties": {
+                    "title": {
+                        "label": "Hotel",
+                        "format": "text"
+                    },
+                    "priceRange": {
+                        "label": "Price Range",
+                        "format": "text"
+                    },
+                    "prices": {
+                        "label": "Provider Prices",
+                        "format": "array"
+                    },
+                    "rating": {
+                        "label": "Rating",
+                        "format": "number"
                     }
                 }
             }

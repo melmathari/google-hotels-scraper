@@ -1,8 +1,14 @@
 import { Page } from 'playwright';
-import { LoadedRequest, PlaywrightCrawlingContext, Request } from 'crawlee';
+import { LoadedRequest, PlaywrightCrawlingContext, Request, Log } from 'crawlee';
 import { waitWhileGoogleLoading } from './utils.js';
 import { GoogleHotelsOptions } from './options.js';
-import { DEFAULT_NUM_OF_ADULTS, DEFAULT_NUM_OF_CHILDREN, MAX_NUM_OF_PEOPLE } from '../constants.js';
+import {
+    DEFAULT_NUM_OF_ADULTS,
+    DEFAULT_NUM_OF_CHILDREN,
+    DEFAULT_NUM_OF_ROOMS,
+    MAX_NUM_OF_PEOPLE,
+    MAX_NUM_OF_ROOMS,
+} from '../constants.js';
 
 // define type for callback function
 type EnqueueDetails = (urls: string[]) => Promise<void>;
@@ -15,7 +21,7 @@ export const getDetailsUrls = async <Context extends PlaywrightCrawlingContext>(
     const element = await page.waitForSelector('input[aria-label="Search for places, hotels and more"]');
     log.info(await element.inputValue());
 
-    await fillInputForm(page, options);
+    await fillInputForm(page, options, log);
     await waitWhileGoogleLoading(page);
     await page.waitForTimeout(1000);
 
@@ -50,7 +56,7 @@ export const getDetailsUrls = async <Context extends PlaywrightCrawlingContext>(
     } while (hasNextPage);
 };
 
-const fillInputForm = async (page: Page, options: GoogleHotelsOptions) => {
+const fillInputForm = async (page: Page, options: GoogleHotelsOptions, log: Log) => {
     let checkInElement = await page.waitForSelector('input[aria-label="Check-in"]');
 
     await checkInElement.click();
@@ -71,13 +77,16 @@ const fillInputForm = async (page: Page, options: GoogleHotelsOptions) => {
     const submitButton = await page.waitForSelector('div[role="dialog"] > div:nth-of-type(4) > div > button:nth-of-type(2)');
     await submitButton.click();
 
+    // Handle travelers (adults, children) and rooms
     const peopleButton = await page.waitForSelector('div[role="button"][aria-label^="Number of travelers"]');
     await peopleButton.click();
     await page.waitForTimeout(1000);
 
     let adults = DEFAULT_NUM_OF_ADULTS;
     let children = DEFAULT_NUM_OF_CHILDREN;
+    let rooms = DEFAULT_NUM_OF_ROOMS;
 
+    // Adjust adults
     while (adults > options.numberOfAdults && adults > 0) {
         const removeAdultButton = await page.waitForSelector('button[aria-label="Remove adult"]');
         await removeAdultButton.click();
@@ -88,6 +97,8 @@ const fillInputForm = async (page: Page, options: GoogleHotelsOptions) => {
         await addAdultButton.click();
         adults++;
     }
+
+    // Adjust children
     while (children > options.numberOfChildren && children >= 0) {
         const removeChildButton = await page.waitForSelector('button[aria-label="Remove child"]');
         await removeChildButton.click();
@@ -99,11 +110,35 @@ const fillInputForm = async (page: Page, options: GoogleHotelsOptions) => {
         children++;
     }
 
+    // Adjust rooms
+    const targetRooms = options.numberOfRooms ?? DEFAULT_NUM_OF_ROOMS;
+    while (rooms > targetRooms && rooms > 1) {
+        const removeRoomButton = await page.waitForSelector('button[aria-label="Remove room"]');
+        await removeRoomButton.click();
+        rooms--;
+    }
+    while (rooms < targetRooms && rooms < MAX_NUM_OF_ROOMS) {
+        const addRoomButton = await page.waitForSelector('button[aria-label="Add room"]');
+        await addRoomButton.click();
+        rooms++;
+    }
+
     const peopleDoneButton = await page.waitForSelector(
         'div[data-default-adult-num="2"] > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > button',
     );
     await peopleDoneButton.click();
 
+    // Handle sorting
+    if (options.sortBy && options.sortBy !== 'relevance') {
+        await applySorting(page, options.sortBy, log);
+    }
+
+    // Handle hotel class filter
+    if (options.hotelClass && options.hotelClass.length > 0) {
+        await applyHotelClassFilter(page, options.hotelClass, log);
+    }
+
+    // Handle currency
     const currencyButton = await page.waitForSelector('footer div c-wiz button');
     await currencyButton.click();
     await page.waitForTimeout(1000);
@@ -112,4 +147,66 @@ const fillInputForm = async (page: Page, options: GoogleHotelsOptions) => {
     await currencyRadio.click();
     const currencyDoneButton = await page.waitForSelector('div[aria-label="Select currency"] > div:nth-of-type(3) > div:nth-of-type(2) > button');
     await currencyDoneButton.click();
+};
+
+const applySorting = async (page: Page, sortBy: string, log: Log) => {
+    try {
+        // Click on the sort dropdown button
+        const sortButton = await page.waitForSelector('button[aria-label^="Sort by"]', { timeout: 5000 });
+        await sortButton.click();
+        await page.waitForTimeout(500);
+
+        // Map sortBy value to the menu item text
+        const sortTextMap: Record<string, string> = {
+            lowest_price: 'Lowest price',
+            highest_rating: 'Highest rating',
+            most_reviewed: 'Most reviewed',
+        };
+
+        const sortText = sortTextMap[sortBy];
+        if (sortText) {
+            const sortOption = await page.waitForSelector(`div[role="menuitemradio"]:has-text("${sortText}")`, { timeout: 5000 });
+            await sortOption.click();
+            await waitWhileGoogleLoading(page);
+            log.info(`Applied sorting: ${sortText}`);
+        }
+    } catch (error) {
+        log.warning(`Failed to apply sorting: ${sortBy}`, { error: (error as Error).message });
+    }
+};
+
+const applyHotelClassFilter = async (page: Page, hotelClasses: number[], log: Log) => {
+    try {
+        // Click on "All filters" button to open the filter panel
+        const allFiltersButton = await page.waitForSelector('button:has-text("All filters")', { timeout: 5000 });
+        await allFiltersButton.click();
+        await page.waitForTimeout(1000);
+
+        // For each hotel class, find and click the checkbox
+        for (const starRating of hotelClasses) {
+            try {
+                const classCheckbox = await page.waitForSelector(
+                    `div[role="checkbox"][aria-label*="${starRating}-star"]`,
+                    { timeout: 3000 },
+                );
+                const isChecked = await classCheckbox.getAttribute('aria-checked');
+                if (isChecked !== 'true') {
+                    await classCheckbox.click();
+                    await page.waitForTimeout(300);
+                }
+            } catch {
+                log.warning(`Could not find ${starRating}-star filter checkbox`);
+            }
+        }
+
+        // Close the filter panel by clicking the close/done button
+        const closeButton = await page.waitForSelector('div[role="dialog"] button[aria-label="Close"]', { timeout: 3000 })
+            .catch(() => page.waitForSelector('div[role="dialog"] button:has-text("Done")', { timeout: 3000 }));
+        await closeButton.click();
+
+        await waitWhileGoogleLoading(page);
+        log.info(`Applied hotel class filter: ${hotelClasses.join(', ')}-star`);
+    } catch (error) {
+        log.warning(`Failed to apply hotel class filter`, { error: (error as Error).message });
+    }
 };

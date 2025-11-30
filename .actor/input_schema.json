@@ -1,12 +1,20 @@
 {
-    "title": "PlaywrightCrawler Template",
+    "title": "Google Hotels Scraper",
     "type": "object",
     "schemaVersion": 1,
     "properties": {
+        "directUrls": {
+            "title": "Direct hotel URLs",
+            "type": "array",
+            "description": "Scrape specific hotel URLs directly, skipping the search. If provided, searchQuery is not required.",
+            "editor": "requestListSources",
+            "sectionCaption": "Search options",
+            "sectionDescription": "Configure search parameters or provide direct URLs"
+        },
         "searchQuery": {
             "title": "Search query",
             "type": "string",
-            "description": "Query to search on google travel hotels.",
+            "description": "Query to search on Google Hotels (e.g., city name, region). Not required if directUrls is provided.",
             "example": "Prague",
             "prefill": "Prague",
             "editor": "textfield"
@@ -38,6 +46,38 @@
             "type": "integer",
             "description": "Number of children for hotels search.",
             "prefill": 0
+        },
+        "numberOfRooms": {
+            "title": "Number of rooms",
+            "type": "integer",
+            "description": "Number of rooms for hotels search.",
+            "minimum": 1,
+            "maximum": 10,
+            "default": 1,
+            "prefill": 1
+        },
+        "sortBy": {
+            "title": "Sort results by",
+            "type": "string",
+            "description": "How to sort the hotel results.",
+            "enum": ["relevance", "lowest_price", "highest_rating", "most_reviewed"],
+            "enumTitles": ["Relevance (default)", "Lowest price", "Highest rating", "Most reviewed"],
+            "default": "relevance",
+            "prefill": "relevance",
+            "editor": "select",
+            "sectionCaption": "Filters & Sorting",
+            "sectionDescription": "Filter and sort hotel results"
+        },
+        "hotelClass": {
+            "title": "Hotel class (star rating)",
+            "type": "array",
+            "description": "Filter hotels by star rating. Select multiple to include various classes.",
+            "items": {
+                "type": "integer",
+                "enum": [2, 3, 4, 5],
+                "enumTitles": ["2-star", "3-star", "4-star", "5-star"]
+            },
+            "editor": "select"
         },
         "currencyCode": {
             "title": "Currency code",
@@ -72,7 +112,6 @@
         }
     },
     "required": [
-        "searchQuery",
         "checkInDate",
         "checkOutDate",
         "numberOfAdults",
