@@ -1,6 +1,8 @@
 {
-    "actorSpecification": 1,
-    "fields": {
+    "title": "Google Hotels Dataset",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
         "title": {
             "type": "string",
             "title": "Hotel Name",
