@@ -4,7 +4,7 @@
         "title": {
             "type": "string",
             "title": "Hotel Name",
-            "description": "The name of the hotel",
+            "description": "The official name of the hotel property",
             "example": "Hilton Prague"
         },
         "url": {
@@ -98,8 +98,8 @@
     },
     "views": {
         "hotels": {
-            "title": "Hotels Overview",
-            "description": "Quick overview of all scraped hotels with key information",
+            "title": "Hotels Data Overview",
+            "description": "Comprehensive overview of all extracted hotel data with essential information",
             "transformation": {
                 "fields": [
                     "thumbnail",
@@ -146,8 +146,8 @@
             }
         },
         "detailed": {
-            "title": "Detailed View",
-            "description": "Complete hotel data including contact info and booking links",
+            "title": "Complete Hotel Information",
+            "description": "Full hotel dataset with contact details, photos, and direct booking links",
             "transformation": {
                 "fields": [
                     "title",
@@ -204,8 +204,8 @@
             }
         },
         "prices": {
-            "title": "Price Comparison",
-            "description": "Focus on prices across different booking providers",
+            "title": "Pricing Analysis",
+            "description": "Detailed price comparison across multiple booking platforms and providers",
             "transformation": {
                 "fields": [
                     "title",

@@ -1,20 +1,20 @@
 {
-    "title": "Google Hotels Scraper",
+    "title": "Google Hotels Data Harvester",
     "type": "object",
     "schemaVersion": 1,
     "properties": {
         "directUrls": {
             "title": "Direct hotel URLs",
             "type": "array",
-            "description": "Scrape specific hotel URLs directly, skipping the search. If provided, searchQuery is not required.",
+            "description": "Extract data from specific hotel pages directly. When provided, location search is bypassed.",
             "editor": "requestListSources",
             "sectionCaption": "Search options",
             "sectionDescription": "Configure search parameters or provide direct URLs"
         },
         "searchQuery": {
-            "title": "Search query",
+            "title": "Location Search",
             "type": "string",
-            "description": "Query to search on Google Hotels (e.g., city name, region). Not required if directUrls is provided.",
+            "description": "Destination to search for hotels on Google (city, region, or landmark). Optional when using direct URLs.",
             "example": "Prague",
             "prefill": "Prague",
             "editor": "textfield"
@@ -87,9 +87,9 @@
             "editor": "textfield"
         },
         "maxResults": {
-            "title": "Max crawled hotels",
+            "title": "Maximum Hotels to Extract",
             "type": "integer",
-            "description": "Use to limit number of hotels you want to get from crawler. If you fill nothing all hotels will be scrape",
+            "description": "Set a limit on the number of hotels to process. Leave empty to extract all available results.",
             "minimum": 0,
             "default": 5,
             "prefill": 5,
