@@ -9,7 +9,26 @@ import { LoadedRequest, Request } from 'crawlee';
 export const skipGoogleConsent = async (request: LoadedRequest<Request>, page: Page) => {
     // If the loaded URL is the Google consent dialog, reject all cookies
     if (request.loadedUrl.startsWith('https://consent.google.com')) {
-        await page.click('button[aria-label="Reject all"]');
+        // Try multiple selectors for the "Reject all" button as Google may use different versions
+        const rejectButtonSelectors = [
+            'button[aria-label="Reject all"]',
+            'button:has-text("Reject all")',
+            'form:has(button) button:first-of-type', // Usually the first button is "Reject all"
+        ];
+
+        for (const selector of rejectButtonSelectors) {
+            try {
+                const button = await page.waitForSelector(selector, { timeout: 5000 });
+                if (button) {
+                    await button.click();
+                    // Wait for navigation back to the original page
+                    await page.waitForURL(/google\.com\/travel/, { timeout: 10000 });
+                    break;
+                }
+            } catch {
+                // Try next selector
+            }
+        }
     }
 };
 
