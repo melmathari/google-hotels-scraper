@@ -73,11 +73,11 @@
             "type": "array",
             "description": "Filter hotels by star rating. Select multiple to include various classes.",
             "items": {
-                "type": "integer",
-                "enum": [2, 3, 4, 5],
-                "enumTitles": ["2-star", "3-star", "4-star", "5-star"]
+                "type": "integer"
             },
-            "editor": "select"
+            "editor": "json",
+            "prefill": [],
+            "example": [3, 4, 5]
         },
         "currencyCode": {
             "title": "Currency code",
